@@ -1,31 +1,31 @@
 local options = {
-    number = true, -- show line numbers
-    relativenumber = true, -- show relative line numbers
-    expandtab = true, -- expand tabs to spaces
-    tabstop = 4, -- 4 spaces for tab
-    shiftwidth = 4, -- 4 spaces for tab
-    incsearch = true, -- search while typing
-    ignorecase = true, -- case insensitive search
-    smartcase = true, -- case sensitive search when using capital letters
-    hidden = true, -- switch buffers without saving
-    cursorline = true, -- highlight current line
-    -- colorcolumn = "80", -- show guide at 80 chars
-    splitbelow = true, -- split vertical windows below
-    splitright = true, -- split horizontal windows right
-    smartindent = true, -- auto indent inside braces
-    breakindent = true, -- keep indentation for wrapped lines
-    scrolloff = 999, -- keep cursor in middle of window
-    signcolumn = "yes", -- keep 1 column for LSP check
-    clipboard = "unnamed", -- use system clipboard
-    timeoutlen = 500, -- command timeout
-    termguicolors = true, -- allow opacity
-    -- powershell options 
-    shell = vim.fn.executable "pwsh" == 1 and "pwsh" or "powershell",
-    shellcmdflag = "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;",
-    shellredir = "-RedirectStandardOutput %s -NoNewWindow -Wait",
-    shellpipe = "2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode",
-    shellquote = "",
-    shellxquote = "",
+	number = true, -- show line numbers
+	relativenumber = true, -- show relative line numbers
+	expandtab = true, -- expand tabs to spaces
+	tabstop = 4, -- 4 spaces for tab
+	shiftwidth = 4, -- 4 spaces for tab
+	incsearch = true, -- search while typing
+	ignorecase = true, -- case insensitive search
+	smartcase = true, -- case sensitive search when using capital letters
+	hidden = true, -- switch buffers without saving
+	cursorline = true, -- highlight current line
+	-- colorcolumn = "80", -- show guide at 80 chars
+	splitbelow = true, -- split vertical windows below
+	splitright = true, -- split horizontal windows right
+	smartindent = true, -- auto indent inside braces
+	breakindent = true, -- keep indentation for wrapped lines
+	scrolloff = 999, -- keep cursor in middle of window
+	signcolumn = "yes", -- keep 1 column for LSP check
+	clipboard = "unnamed", -- use system clipboard
+	timeoutlen = 500, -- command timeout
+	termguicolors = true, -- allow opacity
+	-- powershell options
+	-- shell = vim.fn.executable "pwsh" == 1 and "pwsh" or "powershell",
+	-- shellcmdflag = "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;",
+	-- shellredir = "-RedirectStandardOutput %s -NoNewWindow -Wait",
+	-- shellpipe = "2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode",
+	-- shellquote = "",
+	-- shellxquote = "",
 }
 
 for k, v in pairs(options) do
