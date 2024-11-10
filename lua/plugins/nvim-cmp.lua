@@ -14,6 +14,7 @@ return {
 	},
 	config = function()
 		local cmp = require("cmp")
+		local lspkind = require("lspkind")
 		require("luasnip.loaders.from_vscode").lazy_load()
 		cmp.setup({
 			snippet = {
@@ -31,10 +32,17 @@ return {
 				["<CR>"] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
 			}),
 			sources = cmp.config.sources({
+				{ name = "nvim_lsp" },
 				{ name = "luasnip" },
 				{ name = "buffer" },
 				{ name = "path" },
 			}),
+			formatting = {
+				format = lspkind.cmp_format({
+					maxwidth = 50,
+					ellipsis_char = "...",
+				}),
+			},
 		})
 	end,
 }
