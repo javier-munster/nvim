@@ -3,7 +3,8 @@ return {
 	version = "*",
 	config = function()
 		require("toggleterm").setup({
-			open_mapping = [[<C-\>]],
+            insert_mappings = false,
+			open_mapping = '<C-\\>',
 		})
 
 		local lazygit = require("toggleterm.terminal").Terminal:new({ cmd = "lazygit", direction = "float" })
@@ -13,5 +14,6 @@ return {
 		end
 
 		vim.api.nvim_set_keymap("n", "<leader>g", "<cmd>lua _lazygit_toggle()<CR>", { noremap = true, silent = true })
+        vim.keymap.set('n', '<leader>g', ':lua _lazygit_toggle()<CR>', { desc = "Lazygit"})
 	end,
 }

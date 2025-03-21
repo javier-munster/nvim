@@ -1,3 +1,4 @@
+-- Commenting shortcut
 return {
     "numToStr/Comment.nvim",
     event = { "BufReadPre", "BufNewFile" },
