@@ -1,16 +1,46 @@
 return {
-	"williamboman/mason.nvim",
-	dependencies = {
-		"williamboman/mason-lspconfig.nvim",
-		"WhoIsSethDaniel/mason-tool-installer.nvim",
-	},
-	config = function()
-		local mason = require("mason")
-		local mason_lspconfig = require("mason-lspconfig")
-		local mason_tool_installer = require("mason-tool-installer")
-		local lspconfig = require("lspconfig")
-
-		vim.api.nvim_create_autocmd("LspAttach", {
+    "mason-org/mason-lspconfig.nvim",
+    opts = {
+        ensure_installed = {
+            "angularls",
+            "html",
+            "cssls",
+            "ts_ls",
+            "jsonls",
+            "pyright",
+            "gopls",
+            "angularls",
+            "clangd",
+            "lua_ls",
+            "rust_analyzer",
+            "tailwindcss",
+        },
+        automatic_enable = {
+            exclude = {
+                "denols",
+            }
+        }
+    },
+    dependencies = {
+        { "mason-org/mason.nvim", opts = {} },
+        "neovim/nvim-lspconfig",
+        {
+            "WhoIsSethDaniel/mason-tool-installer.nvim",
+            opts = {
+                ensure_installed = {
+                    "prettier",
+                    "stylua",
+                    "isort",
+                    "black",
+                    "gofumpt",
+                    "goimports",
+                    "shfmt",
+                }
+            }
+        },
+    },
+    config = function()
+        vim.api.nvim_create_autocmd("LspAttach", {
 			group = vim.api.nvim_create_augroup("UserLspConfig", {}),
 			callback = function(ev)
 				local opts = { buffer = ev.buf, silent = true }
@@ -56,60 +86,6 @@ return {
 			end,
 		})
 
-		mason.setup()
-		mason_lspconfig.setup({
-			ensure_installed = {
-                "angularls",
-				"html",
-				"cssls",
-				"ts_ls",
-				"jsonls",
-				"pyright",
-				"gopls",
-				"angularls",
-				"clangd",
-				"lua_ls",
-				"rust_analyzer",
-				"tailwindcss",
-			},
-		})
-
-		mason_tool_installer.setup({
-			ensure_installed = {
-				"prettier",
-				"stylua",
-				"isort",
-				"black",
-				"gofumpt",
-				"goimports",
-				"shfmt",
-			},
-		})
-
-		local capabilities = require("cmp_nvim_lsp").default_capabilities()
-		mason_lspconfig.setup_handlers({
-			function(server_name)
-                if server_name ~= "denols" then
-                    lspconfig[server_name].setup({
-                        capabilities = capabilities,
-                    })
-                end
-			end,
-			["lua_ls"] = function()
-				lspconfig["lua_ls"].setup({
-					capabilities = capabilities,
-					settings = {
-						Lua = {
-							diagnostics = {
-								globals = {
-									"vim",
-									"require",
-								},
-							},
-						},
-					},
-				})
-			end,
-		})
-	end,
+        local capabilities = require("cmp_nvim_lsp").default_capabilities()
+    end,
 }
