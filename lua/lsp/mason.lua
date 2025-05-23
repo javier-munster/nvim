@@ -1,20 +1,22 @@
+local servers = {
+    "angularls",
+    "html",
+    "cssls",
+    "ts_ls",
+    "jsonls",
+    "pyright",
+    "gopls",
+    "angularls",
+    "clangd",
+    "lua_ls",
+    "rust_analyzer",
+    "tailwindcss",
+}
+
 return {
     "mason-org/mason-lspconfig.nvim",
     opts = {
-        ensure_installed = {
-            "angularls",
-            "html",
-            "cssls",
-            "ts_ls",
-            "jsonls",
-            "pyright",
-            "gopls",
-            "angularls",
-            "clangd",
-            "lua_ls",
-            "rust_analyzer",
-            "tailwindcss",
-        },
+        ensure_installed = servers,
         automatic_enable = {
             exclude = {
                 "denols",
@@ -86,6 +88,25 @@ return {
 			end,
 		})
 
+        local mason_lspconfig = require("mason-lspconfig")
+        local lspconfig = require("lspconfig")
         local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+        for _, server in ipairs(servers) do
+            local opts = { capabilities = capabilities, }
+            if server ~= "denols" then
+                if server == "lua_ls" then
+                    opts.settings = {
+                        Lua = {
+                            diagnostics = {
+                                globals = { "vim", "require" },
+                            },
+                        },
+                    }
+                end
+
+                lspconfig[server].setup(opts)
+            end
+        end
     end,
 }
