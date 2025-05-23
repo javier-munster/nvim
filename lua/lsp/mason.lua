@@ -88,7 +88,6 @@ return {
 			end,
 		})
 
-        local mason_lspconfig = require("mason-lspconfig")
         local lspconfig = require("lspconfig")
         local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
@@ -108,5 +107,5 @@ return {
                 lspconfig[server].setup(opts)
             end
         end
-    end,
+	end,
 }
