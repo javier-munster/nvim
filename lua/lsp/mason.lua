@@ -6,7 +6,6 @@ local servers = {
     "jsonls",
     "pyright",
     "gopls",
-    "angularls",
     "clangd",
     "lua_ls",
     "rust_analyzer",
@@ -88,6 +87,7 @@ return {
 			end,
 		})
 
+        require("mason").setup()
         local lspconfig = require("lspconfig")
         local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
