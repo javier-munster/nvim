@@ -88,12 +88,12 @@ return {
 		})
 
         require("mason").setup()
-        local lspconfig = require("lspconfig")
         local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
         for _, server in ipairs(servers) do
-            local opts = { capabilities = capabilities, }
             if server ~= "denols" then
+                local opts = { capabilities = capabilities, }
+
                 if server == "lua_ls" then
                     opts.settings = {
                         Lua = {
@@ -104,7 +104,8 @@ return {
                     }
                 end
 
-                lspconfig[server].setup(opts)
+                vim.lsp.config[server] = opts
+                vim.lsp.enable(server)
             end
         end
 	end,
