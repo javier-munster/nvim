@@ -9,17 +9,26 @@ local servers = {
     "clangd",
     "lua_ls",
     "rust_analyzer",
+    "ruby_lsp",
     "tailwindcss",
+    "postgres_lsp",
+    "biome",
 }
+
+-- Installed, but configured/enabled by hand below so that our custom root_dir
+-- is not bypassed by mason-lspconfig's automatic_enable.
+local manual_servers = {
+    "denols",
+}
+
+local supabase = require("util.supabase")
 
 return {
     "mason-org/mason-lspconfig.nvim",
     opts = {
-        ensure_installed = servers,
+        ensure_installed = vim.list_extend(vim.list_slice(servers), manual_servers),
         automatic_enable = {
-            exclude = {
-                "denols",
-            }
+            exclude = manual_servers,
         }
     },
     dependencies = {
@@ -90,23 +99,89 @@ return {
         require("mason").setup()
         local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
+        -- Captured before we override it, so the wrapper can fall back to
+        -- lspconfig's own (monorepo aware) detection.
+        local ts_ls_root_dir = (vim.lsp.config["ts_ls"] or {}).root_dir
+
         for _, server in ipairs(servers) do
-            if server ~= "denols" then
-                local opts = { capabilities = capabilities, }
+            local opts = { capabilities = capabilities, }
 
-                if server == "lua_ls" then
-                    opts.settings = {
-                        Lua = {
-                            diagnostics = {
-                                globals = { "vim", "require" },
-                            },
+            if server == "lua_ls" then
+                opts.settings = {
+                    Lua = {
+                        diagnostics = {
+                            globals = { "vim", "require" },
                         },
-                    }
-                end
+                    },
+                }
+            elseif server == "ts_ls" then
+                -- Hand supabase/functions/ over to denols.
+                opts.root_dir = function(bufnr, on_dir)
+                    if supabase.functions_root(bufnr) then
+                        return
+                    end
 
-                vim.lsp.config[server] = opts
-                vim.lsp.enable(server)
+                    if ts_ls_root_dir then
+                        ts_ls_root_dir(bufnr, on_dir)
+                    else
+                        on_dir(vim.fs.root(bufnr, { "package.json", "tsconfig.json", ".git" }) or vim.fn.getcwd())
+                    end
+                end
+            elseif server == "angularls" then
+                -- Without this it attaches to every TS buffer with a nil root,
+                -- since lspconfig leaves workspace_required off.
+                opts.root_dir = function(bufnr, on_dir)
+                    if supabase.functions_root(bufnr) then
+                        return
+                    end
+
+                    local root = vim.fs.root(bufnr, { "angular.json", "nx.json" })
+
+                    if root then
+                        on_dir(root)
+                    end
+                end
+            elseif server == "postgres_lsp" then
+                -- Also start in Supabase projects, not only in ones carrying a
+                -- postgres-language-server config file.
+                opts.root_dir = function(bufnr, on_dir)
+                    local root = vim.fs.root(bufnr, { "postgres-language-server.jsonc", "postgrestools.jsonc" })
+                        or vim.fs.root(bufnr, { "supabase" })
+
+                    if root then
+                        on_dir(root)
+                    end
+                end
             end
+
+            vim.lsp.config[server] = opts
+            vim.lsp.enable(server)
         end
+
+        -- Deno: Supabase edge functions only.
+        vim.lsp.config["denols"] = {
+            capabilities = capabilities,
+            root_dir = function(bufnr, on_dir)
+                local root = supabase.functions_root(bufnr)
+
+                if root then
+                    on_dir(root)
+                end
+            end,
+            settings = {
+                deno = {
+                    enable = true,
+                    lint = true,
+                },
+            },
+            before_init = function(_, config)
+                local import_map = config.root_dir and config.root_dir .. "/import_map.json"
+
+                if import_map and vim.uv.fs_stat(import_map) then
+                    config.settings.deno.importMap = import_map
+                end
+            end,
+        }
+        vim.lsp.enable("denols")
 	end,
 }
