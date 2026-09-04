@@ -38,8 +38,9 @@ require("lazy").setup({
 	-- Configure any other settings here. See the documentation for more details.
 	-- colorscheme that will be used when installing plugins.
 	install = { colorscheme = { "tokyonight" } },
-	-- automatically check for plugin updates
-	checker = { enabled = true },
+	-- check for updates in the background, but do not pop up a notification;
+	-- pending updates still show in `:Lazy`
+	checker = { enabled = true, notify = false },
 })
 
 -- Other plugin considerations: oil
