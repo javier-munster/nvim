@@ -45,6 +45,8 @@ return {
                     "gofumpt",
                     "goimports",
                     "shfmt",
+                    -- nvim-treesitter's main branch builds parsers with it
+                    "tree-sitter-cli",
                 }
             }
         },
@@ -82,11 +84,17 @@ return {
 				opts.desc = "Show line diagnostics"
 				vim.keymap.set("n", "<leader>y", vim.diagnostic.open_float, opts)
 
+				-- goto_prev/goto_next are deprecated, removed in nvim 0.13.
+				-- jump() does not open the float on its own, so ask for it.
 				opts.desc = "Go to previous diagnostics"
-				vim.keymap.set("n", "[y", vim.diagnostic.goto_prev, opts)
+				vim.keymap.set("n", "[y", function()
+					vim.diagnostic.jump({ count = -1, float = true })
+				end, opts)
 
 				opts.desc = "Go to next diagnostic"
-				vim.keymap.set("n", "]y", vim.diagnostic.goto_next, opts)
+				vim.keymap.set("n", "]y", function()
+					vim.diagnostic.jump({ count = 1, float = true })
+				end, opts)
 
 				opts.desc = "Show documentation for what is under cursor"
 				vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
@@ -99,9 +107,31 @@ return {
         require("mason").setup()
         local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-        -- Captured before we override it, so the wrapper can fall back to
-        -- lspconfig's own (monorepo aware) detection.
-        local ts_ls_root_dir = (vim.lsp.config["ts_ls"] or {}).root_dir
+        -- supabase/functions/ belongs to denols, so keep the other JS/TS
+        -- servers out of it while leaving their own root detection intact.
+        -- Wrapping lspconfig's logic rather than restating it means upstream
+        -- marker changes keep working; when a server only declares
+        -- root_markers we require a match, so it cannot attach with a nil root.
+        local function skipping_supabase_functions(server)
+            local config = vim.lsp.config[server] or {}
+            local root_dir, root_markers = config.root_dir, config.root_markers
+
+            return function(bufnr, on_dir)
+                if supabase.functions_root(bufnr) then
+                    return
+                end
+
+                if root_dir then
+                    return root_dir(bufnr, on_dir)
+                end
+
+                local root = root_markers and vim.fs.root(bufnr, root_markers)
+
+                if root then
+                    on_dir(root)
+                end
+            end
+        end
 
         for _, server in ipairs(servers) do
             local opts = { capabilities = capabilities, }
@@ -114,32 +144,19 @@ return {
                         },
                     },
                 }
-            elseif server == "ts_ls" then
-                -- Hand supabase/functions/ over to denols.
-                opts.root_dir = function(bufnr, on_dir)
-                    if supabase.functions_root(bufnr) then
-                        return
-                    end
+            elseif server == "ts_ls" or server == "biome" or server == "angularls" then
+                opts.root_dir = skipping_supabase_functions(server)
+            elseif server == "ruby_lsp" then
+                -- No RuboCop diagnostics: projects that never followed its
+                -- defaults light up every line. Syntax errors still show.
+                opts.init_options = { linters = {} }
 
-                    if ts_ls_root_dir then
-                        ts_ls_root_dir(bufnr, on_dir)
-                    else
-                        on_dir(vim.fs.root(bufnr, { "package.json", "tsconfig.json", ".git" }) or vim.fn.getcwd())
-                    end
-                end
-            elseif server == "angularls" then
-                -- Without this it attaches to every TS buffer with a nil root,
-                -- since lspconfig leaves workspace_required off.
-                opts.root_dir = function(bufnr, on_dir)
-                    if supabase.functions_root(bufnr) then
-                        return
-                    end
-
-                    local root = vim.fs.root(bufnr, { "angular.json", "nx.json" })
-
-                    if root then
-                        on_dir(root)
-                    end
+                if vim.fn.executable("rbenv") == 1 then
+                    -- Mason's ruby-lsp is pinned to the Ruby it was installed with,
+                    -- which breaks projects whose Gemfile wants another version.
+                    -- rbenv exec runs in root_dir, so it picks the project's Ruby.
+                    -- Needs `gem install ruby-lsp` for each Ruby version in use.
+                    opts.cmd = { "rbenv", "exec", "ruby-lsp" }
                 end
             elseif server == "postgres_lsp" then
                 -- Also start in Supabase projects, not only in ones carrying a
